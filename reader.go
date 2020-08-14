@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -46,9 +45,6 @@ func GetReader(fileName string) (io.ReadCloser, error) {
 		sort.Slice(zipFile.File, func(i, j int) bool {
 			return zipFile.File[i].CompressedSize64 > zipFile.File[j].CompressedSize64
 		})
-
-		fmt.Println(zipFile.File)
-		fmt.Println(zipFile.File[0].Name)
 
 		reader, err = zipFile.File[0].Open()
 		if err != nil {
