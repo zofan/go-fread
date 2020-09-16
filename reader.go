@@ -43,7 +43,7 @@ func GetReader(fileName string) (io.ReadCloser, error) {
 		}
 
 		sort.Slice(zipFile.File, func(i, j int) bool {
-			return zipFile.File[i].CompressedSize64 > zipFile.File[j].CompressedSize64
+			return zipFile.File[i].UncompressedSize64 > zipFile.File[j].UncompressedSize64
 		})
 
 		reader, err = zipFile.File[0].Open()
