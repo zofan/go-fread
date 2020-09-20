@@ -1,24 +1,20 @@
 package fread
 
-import "bytes"
-
-var (
-	XmlSplit     = `</`
-	JsonSplit    = `,`
-	CsvSplit     = []byte{',', ';', '\t'}
-	SpaceSplit   = []byte(" \n\r\t")
-	SpecialSplit = []byte("`~!@#$%^&*()_+-=[{]};:'\"\\|,<.>/?№() \n\r\t")
+import (
+	"bufio"
+	"bytes"
 )
 
-func ScanSplit(split string) func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	splitBytes := []byte(split)
+var (
+	XmlSplit        = []byte(`</`)
+	SpaceAnySplit   = []byte(" \n\r\t")
+	SpecialAnySplit = []byte("`~!@#$%^&+=[]{};'\"\\|,<>/?№() \n\r\t")
+)
 
+func ScanSplit(split []byte) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
-		}
-		if i := bytes.Index(data, splitBytes); i >= 0 {
-			return i + len(splitBytes), data[:i], nil
+		if i := bytes.Index(data, split); i >= 0 {
+			return i + len(split), data[:i], nil
 		}
 		if atEOF {
 			return len(data), data, nil
@@ -27,10 +23,10 @@ func ScanSplit(split string) func(data []byte, atEOF bool) (advance int, token [
 	}
 }
 
-func ScanSplitAny(splitBytes []byte) func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func ScanSplitAny(split []byte) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		for i := 0; i < len(data); i++ {
-			if bytes.IndexByte(splitBytes, data[i]) >= 0 {
+			if bytes.IndexByte(split, data[i]) >= 0 {
 				return i + 1, data[:i], nil
 			}
 		}
@@ -41,10 +37,10 @@ func ScanSplitAny(splitBytes []byte) func(data []byte, atEOF bool) (advance int,
 	}
 }
 
-func ScanSplitNotAny(splitBytes []byte) func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func ScanSplitNotAny(split []byte) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		for i := 0; i < len(data); i++ {
-			if bytes.IndexByte(splitBytes, data[i]) == -1 {
+			if bytes.IndexByte(split, data[i]) == -1 {
 				return i + 1, data[:i], nil
 			}
 		}

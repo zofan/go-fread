@@ -4,8 +4,8 @@ import (
 	"bufio"
 )
 
-func ReadLines(file string, output chan string) error {
-	reader, err := GetReader(file)
+func Lines(filePath string, output chan []byte) error {
+	reader, err := NewReader(filePath)
 	if err != nil {
 		return err
 	}
@@ -13,7 +13,7 @@ func ReadLines(file string, output chan string) error {
 
 	s := bufio.NewScanner(reader)
 	for s.Scan() {
-		output <- s.Text()
+		output <- s.Bytes()
 	}
 
 	return s.Err()

@@ -4,8 +4,8 @@ import (
 	"bufio"
 )
 
-func ReadChunkSplit(file string, split string, output chan []byte) error {
-	reader, err := GetReader(file)
+func ChunkSplit(filePath string, split []byte, output chan []byte) error {
+	reader, err := NewReader(filePath)
 	if err != nil {
 		return err
 	}
@@ -20,15 +20,15 @@ func ReadChunkSplit(file string, split string, output chan []byte) error {
 	return scanner.Err()
 }
 
-func ReadChunkSplitAny(file string, splitBytes []byte, output chan []byte) error {
-	reader, err := GetReader(file)
+func ChunkSplitAny(filePath string, split []byte, output chan []byte) error {
+	reader, err := NewReader(filePath)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
 
 	scanner := bufio.NewScanner(reader)
-	scanner.Split(ScanSplitAny(splitBytes))
+	scanner.Split(ScanSplitAny(split))
 	for scanner.Scan() {
 		output <- scanner.Bytes()
 	}

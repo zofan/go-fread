@@ -12,21 +12,26 @@ import (
 	"strings"
 )
 
-func GetReader(fileName string) (io.ReadCloser, error) {
-	file, err := os.Open(fileName)
+var (
+	ZipSelector = ZipMaxSizeSelector
+
+	ErrZipNotFileContains = errors.New(`zip does not contains files`)
+)
+
+func NewReader(filePath string) (io.ReadCloser, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	head, err := Head(file, 10)
 	if err != nil {
 		return nil, err
 	}
 
 	var reader io.ReadCloser
 
-	ext := filepath.Ext(filepath.Base(fileName))
-
-	head, err := ReadHead(file, 10)
-	if err != nil {
-		return nil, err
-	}
-
+	ext := filepath.Ext(filepath.Base(filePath))
 	if strings.Contains(ext, `.zip`) || bytes.HasPrefix(head, []byte{'\x50', '\x4B'}) {
 		stat, err := file.Stat()
 		if err != nil {
@@ -39,17 +44,10 @@ func GetReader(fileName string) (io.ReadCloser, error) {
 		}
 
 		if len(zipFile.File) == 0 {
-			return nil, errors.New(`zip does not contains files`)
+			return nil, ErrZipNotFileContains
 		}
 
-		sort.Slice(zipFile.File, func(i, j int) bool {
-			return zipFile.File[i].UncompressedSize64 > zipFile.File[j].UncompressedSize64
-		})
-
-		reader, err = zipFile.File[0].Open()
-		if err != nil {
-			return nil, err
-		}
+		reader, err = ZipSelector(zipFile)
 	} else if strings.Contains(ext, `.gz`) || bytes.HasPrefix(head, []byte{'\x1F', '\x8B'}) {
 		reader, err = gzip.NewReader(file)
 		if err != nil {
@@ -62,7 +60,7 @@ func GetReader(fileName string) (io.ReadCloser, error) {
 	return reader, err
 }
 
-func ReadHead(file *os.File, size int) ([]byte, error) {
+func Head(file *os.File, size int) ([]byte, error) {
 	var head = make([]byte, size)
 
 	_, err := file.ReadAt(head, 0)
@@ -75,4 +73,12 @@ func ReadHead(file *os.File, size int) ([]byte, error) {
 	}
 
 	return head, nil
+}
+
+func ZipMaxSizeSelector(zipFile *zip.Reader) (io.ReadCloser, error) {
+	sort.Slice(zipFile.File, func(i, j int) bool {
+		return zipFile.File[i].UncompressedSize64 > zipFile.File[j].UncompressedSize64
+	})
+
+	return zipFile.File[0].Open()
 }
