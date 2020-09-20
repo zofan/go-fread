@@ -2,6 +2,7 @@ package fread
 
 import (
 	"archive/zip"
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"errors"
@@ -58,6 +59,53 @@ func NewReader(filePath string) (io.ReadCloser, error) {
 	}
 
 	return reader, err
+}
+
+func ChunkSplit(filePath string, split []byte, output chan []byte) error {
+	r, err := NewReader(filePath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	s := bufio.NewScanner(r)
+	s.Split(ScanSplit(split))
+	for s.Scan() {
+		output <- s.Bytes()
+	}
+
+	return s.Err()
+}
+
+func ChunkSplitAny(filePath string, split []byte, output chan []byte) error {
+	r, err := NewReader(filePath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	s := bufio.NewScanner(r)
+	s.Split(ScanSplitAny(split))
+	for s.Scan() {
+		output <- s.Bytes()
+	}
+
+	return s.Err()
+}
+
+func Lines(filePath string, output chan []byte) error {
+	r, err := NewReader(filePath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		output <- s.Bytes()
+	}
+
+	return s.Err()
 }
 
 func Head(file *os.File, size int) ([]byte, error) {
