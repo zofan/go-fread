@@ -16,7 +16,7 @@ import (
 var (
 	ZipSelector = ZipMaxSizeSelector
 
-	ErrZipNotFileContains = errors.New(`zip does not contains files`)
+	ErrZipNotFileContains = errors.New(`fread: zip does not contains files`)
 )
 
 func NewReader(filePath string) (io.ReadCloser, error) {
