@@ -25,7 +25,7 @@ func NewReader(filePath string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	head, err := Head(file, 10)
+	head, err := Head(file, 8)
 	if err != nil {
 		return nil, err
 	}
